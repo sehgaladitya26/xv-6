@@ -111,9 +111,9 @@ struct proc {
   // store alarm interval
   int interval;
   // store interval passed
-  int ticks_passed;
-  // pointer to handler function
-  uint64 handler;
+  int ticks_left;
+  // pointer to signal handler function
+  uint64 sig_handler;
   // struct to store value for trapframe
   struct trapframe *sigalarm_tf;
 };

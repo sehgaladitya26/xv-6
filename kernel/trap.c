@@ -67,13 +67,12 @@ usertrap(void)
     syscall();
   } else if((which_dev = devintr()) != 0){
     if(which_dev == 2 && myproc()->interval) {
-      myproc()->ticks_passed--;
-      printf("%d\n",myproc()->interval);
-      if(myproc()->ticks_passed == 0) {
+      myproc()->ticks_left--;
+      if(myproc()->ticks_left == 0) {
         struct trapframe *tf = kalloc();
         memmove(tf, p->trapframe, PGSIZE);
         p->sigalarm_tf = tf;
-        p->trapframe->epc = p->handler;
+        p->trapframe->epc = p->sig_handler;
       }
     }
     // ok

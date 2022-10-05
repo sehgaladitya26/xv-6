@@ -104,10 +104,10 @@ sys_sigalarm(void)
 {
   // sets the interval and handler after every tick
   argint(0, &myproc()->interval);
-  argaddr(1, &myproc()->handler);
+  argaddr(1, &myproc()->sig_handler);
   
   // sets ticks_passed as the interval
-  myproc()->ticks_passed = myproc()->interval;
+  myproc()->ticks_left = myproc()->interval;
   return 0;
 }
 
@@ -117,6 +117,6 @@ sys_sigreturn(void)
   struct proc *p = myproc();
   memmove(p->trapframe, p->sigalarm_tf, PGSIZE);
   kfree(p->sigalarm_tf);
-  p->ticks_passed = p->interval;
+  p->ticks_left = p->interval;
   return p->trapframe->a0;
 }
