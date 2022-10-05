@@ -97,3 +97,16 @@ sys_trace(void)
   argint(0, &myproc()->trace_flag); //arg(a0, trace_flag) // returns void
   return 0;
 }
+
+// sets the 
+uint64
+sys_sigalarm(void)
+{
+  // sets the interval and handler after every tick
+  argint(0, &myproc()->interval);
+  argaddr(1, &myproc()->handler);
+  
+  // sets ticks_passed as the interval
+  myproc()->ticks_passed = myproc()->interval;
+  return 0;
+}

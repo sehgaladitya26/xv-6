@@ -107,4 +107,11 @@ struct proc {
 
   // flag to check for trace syscall
   int trace_flag; 
+
+  // store alarm interval
+  int interval;
+  // store interval passed
+  int ticks_passed;
+  // pointer to handler function
+  uint64 handler;
 };
