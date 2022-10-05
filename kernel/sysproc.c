@@ -110,3 +110,13 @@ sys_sigalarm(void)
   myproc()->ticks_passed = myproc()->interval;
   return 0;
 }
+
+uint64 
+sys_sigreturn(void)
+{
+  struct proc *p = myproc();
+  memmove(p->trapframe, p->sigalarm_tf, PGSIZE);
+  kfree(p->sigalarm_tf);
+  p->ticks_passed = p->interval;
+  return p->trapframe->a0;
+}

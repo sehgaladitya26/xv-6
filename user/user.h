@@ -23,7 +23,7 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 int trace(int);
-int sigalalarm(int interval, void (*handler)());
+int sigalarm(int interval, void (*handler)());
 int sigreturn(void);
 
 // ulib.c

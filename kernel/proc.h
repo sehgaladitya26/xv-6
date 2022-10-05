@@ -114,4 +114,6 @@ struct proc {
   int ticks_passed;
   // pointer to handler function
   uint64 handler;
+  // struct to store value for trapframe
+  struct trapframe *sigalarm_tf;
 };
