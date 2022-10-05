@@ -24,7 +24,7 @@ main(int argc, char *argv[])
   if(argc < 3){
    c:	4789                	li	a5,2
    e:	00a7cf63          	blt	a5,a0,2c <main+0x2c>
-    printf("Error(trace): Incorrect command");
+    printf("Error(trace): Incorrect command\n");
   12:	00001517          	auipc	a0,0x1
   16:	84e50513          	addi	a0,a0,-1970 # 860 <malloc+0xf0>
   1a:	00000097          	auipc	ra,0x0
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
   56:	068e                	slli	a3,a3,0x3
   58:	96be                	add	a3,a3,a5
   5a:	10090593          	addi	a1,s2,256
-    printf("Error(trace): integer mask invalid");
+    printf("Error(trace): integer mask invalid\n");
     exit(1);
   }
   
@@ -77,9 +77,9 @@ main(int argc, char *argv[])
   7e:	4501                	li	a0,0
   80:	00000097          	auipc	ra,0x0
   84:	2b2080e7          	jalr	690(ra) # 332 <exit>
-    printf("Error(trace): integer mask invalid");
-  88:	00000517          	auipc	a0,0x0
-  8c:	7f850513          	addi	a0,a0,2040 # 880 <malloc+0x110>
+    printf("Error(trace): integer mask invalid\n");
+  88:	00001517          	auipc	a0,0x1
+  8c:	80050513          	addi	a0,a0,-2048 # 888 <malloc+0x118>
   90:	00000097          	auipc	ra,0x0
   94:	622080e7          	jalr	1570(ra) # 6b2 <printf>
     exit(1);
@@ -813,7 +813,7 @@ printint(int fd, int xx, int base, int sgn)
     buf[i++] = digits[x % base];
  41c:	2601                	sext.w	a2,a2
  41e:	00000517          	auipc	a0,0x0
- 422:	49250513          	addi	a0,a0,1170 # 8b0 <digits>
+ 422:	49a50513          	addi	a0,a0,1178 # 8b8 <digits>
  426:	883a                	mv	a6,a4
  428:	2705                	addiw	a4,a4,1
  42a:	02c5f7bb          	remuw	a5,a1,a2
@@ -923,7 +923,7 @@ vprintf(int fd, const char *fmt, va_list ap)
  4e6:	07000d93          	li	s11,112
     putc(fd, digits[x >> (sizeof(uint64) * 8 - 4)]);
  4ea:	00000b97          	auipc	s7,0x0
- 4ee:	3c6b8b93          	addi	s7,s7,966 # 8b0 <digits>
+ 4ee:	3ceb8b93          	addi	s7,s7,974 # 8b8 <digits>
  4f2:	a839                	j	510 <vprintf+0x6a>
         putc(fd, c);
  4f4:	85ca                	mv	a1,s2
@@ -1077,7 +1077,7 @@ vprintf(int fd, const char *fmt, va_list ap)
  628:	bdf9                	j	506 <vprintf+0x60>
           s = "(null)";
  62a:	00000917          	auipc	s2,0x0
- 62e:	27e90913          	addi	s2,s2,638 # 8a8 <malloc+0x138>
+ 62e:	28690913          	addi	s2,s2,646 # 8b0 <malloc+0x140>
         while(*s != 0){
  632:	02800593          	li	a1,40
  636:	bff1                	j	612 <vprintf+0x16c>
