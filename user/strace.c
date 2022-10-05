@@ -13,12 +13,12 @@ main(int argc, char *argv[])
 
   // Error check
   if(argc < 3){
-    fprintf(STDOUT, "Error(trace): Incorrect command");
+    printf("Error(trace): Incorrect command");
     exit(1);
   }
 
   if (trace(atoi(argv[1])) < 0) {
-    fprintf(STDOUT, "Error(trace): integer mask invalid");
+    printf("Error(trace): integer mask invalid");
     exit(1);
   }
   
