@@ -69,9 +69,8 @@ usertrap(void)
     if(which_dev == 2 && myproc()->interval) {
       myproc()->ticks_left--;
       if(myproc()->ticks_left == 0) {
-        struct trapframe *tf = kalloc();
-        memmove(tf, p->trapframe, PGSIZE);
-        p->sigalarm_tf = tf;
+        p->sigalarm_tf = kalloc();
+        memmove(p->sigalarm_tf, p->trapframe, PGSIZE);
         p->trapframe->epc = p->sig_handler;
       }
     }
