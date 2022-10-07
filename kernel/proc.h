@@ -107,4 +107,7 @@ struct proc {
 
   // flag to check for trace syscall
   int trace_flag; 
+
+  // tick number when the process was created
+  int tick_creation_time;
 };

@@ -125,6 +125,10 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
+  // FOR FCFS Scheduler
+  p->tick_creation_time = ticks;
+
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -471,6 +475,33 @@ scheduler(void)
       }
       release(&p->lock);
     }
+
+    #ifdef FCFS
+      struct proc* proc_to_run = 0;
+      for(p = proc; p < &proc[NPROC]; p++)
+      {
+        acquire(&p->lock);
+        if (p->state != RUNNABLE)
+        {
+          release(&p->lock);
+          continue;
+        }
+        if (p == 0 || (proc_to_run->tick_creation_time > p->tick_creation_time))
+        {
+          proc_to_run = p;
+        }
+        release(&p->lock);
+      }
+      if(proc_to_run != 0)
+      {
+        acquire(&proc_to_run->lock);
+        proc_to_run->state = RUNNING;
+        c->proc = proc_to_run;
+        swtch(&c->context, &proc_to_run->context);
+        c->proc = 0;
+        release(&proc_to_run->lock);
+      }
+    #endif
   }
 }
 
