@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "rand.h"
 
 struct cpu cpus[NCPU];
 
@@ -126,6 +127,8 @@ found:
   p->state = USED;
   // FOR FCFS Scheduler
   p->tick_creation_time = ticks;
+  // FOR LBS Scheduler
+  p->tickets = 10;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -473,7 +476,7 @@ scheduler(void)
       }
       release(&p->lock);
     }
-    #else
+    #endif
     #ifdef FCFS
       //printf("...FCFS...\n");
       struct proc *p;
@@ -512,6 +515,41 @@ scheduler(void)
         release(&proc_to_run->lock);
       }
     #endif
+    #ifdef LBS
+      struct proc *p;
+      int counter = 0;
+      long rand_num = -1;
+      int max_tickets = 0;
+
+      // Getting upper bound for total ticket range
+      for(p = proc; p < &proc[NPROC]; p++) {
+        if(p-> state == RUNNABLE)
+          max_tickets += p->tickets;
+      }
+
+      // Getting the value for random number
+      rand_num = random_at_most(max_tickets);
+
+      for(p = proc; p < &proc[NPROC]; p++) {
+        acquire(&p->lock);
+        if(p->state != RUNNABLE){
+          release(&p->lock);
+          continue;
+        }
+        counter += p->tickets;
+        if(counter < rand_num) {
+          release(&p->lock);
+          continue;
+        }
+        else if(p->state == RUNNABLE && counter >= rand_num) {
+          p->state = RUNNING;
+          c->proc = p;
+          swtch(&c->context, &p->context);
+          c->proc = 0;
+          release(&p->lock);
+          break;
+        }
+      }
     #endif
   }
 }

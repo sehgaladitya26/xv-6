@@ -93,6 +93,10 @@ usertrap(void)
     if(which_dev == 2)
       yield();
   #endif
+  #ifdef LBS
+    if(which_dev == 2)
+      yield();
+  #endif
   usertrapret();
 }
 
@@ -165,6 +169,10 @@ kerneltrap()
 
   // give up the CPU if this is a timer interrupt.
   #ifdef RR
+    if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
+      yield();
+  #endif
+  #ifdef LBS
     if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
       yield();
   #endif

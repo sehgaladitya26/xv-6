@@ -120,3 +120,10 @@ sys_sigreturn(void)
   p->ticks_left = p->interval;
   return p->trapframe->a0;
 }
+
+uint64 
+sys_settickets(void)
+{
+  argint(0, &myproc()->tickets);
+  return myproc()->tickets;
+}
