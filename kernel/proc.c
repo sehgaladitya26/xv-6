@@ -124,6 +124,8 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  // FOR FCFS Scheduler
+  p->tick_creation_time = ticks;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -447,14 +449,14 @@ wait(uint64 addr)
 void
 scheduler(void)
 {
-  struct proc *p;
   struct cpu *c = mycpu();
   
   c->proc = 0;
   for(;;){
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
-
+  #ifdef RR
+    struct proc *p;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
@@ -471,6 +473,46 @@ scheduler(void)
       }
       release(&p->lock);
     }
+    #else
+    #ifdef FCFS
+      //printf("...FCFS...\n");
+      struct proc *p;
+      struct proc* proc_to_run = 0;
+      for(p = proc; p < &proc[NPROC]; p++)
+      {
+        acquire(&p->lock);
+        if (p->state != RUNNABLE)
+        {
+          release(&p->lock);
+          continue;
+        }
+
+        if (proc_to_run == 0)
+        {
+          proc_to_run = p;
+          continue;
+        }
+        else if (proc_to_run->tick_creation_time > p->tick_creation_time)
+        {
+          release(&proc_to_run->lock);
+          proc_to_run = p;
+          continue;
+        }
+
+        release(&p->lock);
+      }
+
+      if(proc_to_run != 0)
+      {
+        // acquire(&proc_to_run->lock);
+        proc_to_run->state = RUNNING;
+        c->proc = proc_to_run;
+        swtch(&c->context, &proc_to_run->context);
+        c->proc = 0;
+        release(&proc_to_run->lock);
+      }
+    #endif
+    #endif
   }
 }
 

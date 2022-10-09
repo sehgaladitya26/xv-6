@@ -50,6 +50,21 @@ endif
 
 QEMU = qemu-system-riscv64
 
+# To decide which scheduler to use
+SCHEDULER_TYPE = -D RR
+ifeq ($(SCHEDULER), FCFS)
+	SCHEDULER_TYPE = -D FCFS
+endif
+ifeq ($(SCHEDULER), LBS)
+	SCHEDULER_TYPE = -D LBS
+endif
+ifeq ($(SCHEDULER), PBS)
+	SCHEDULER_TYPE = -D PBS
+endif
+ifeq ($(SCHEDULER), MLFQ)
+	SCHEDULER_TYPE = -D MLFQ
+endif
+
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -62,6 +77,7 @@ CFLAGS += -mcmodel=medany
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I.
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+CFLAGS += $(SCHEDULER_TYPE)
 
 # Disable PIE when possible (for Ubuntu 16.10 toolchain)
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)

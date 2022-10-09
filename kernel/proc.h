@@ -116,4 +116,6 @@ struct proc {
   uint64 sig_handler;
   // struct to store value for trapframe
   struct trapframe *sigalarm_tf;
+  // tick number when the process was created
+  int tick_creation_time;
 };
