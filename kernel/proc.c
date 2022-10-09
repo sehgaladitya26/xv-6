@@ -532,23 +532,18 @@ scheduler(void)
 
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
-        if(p->state != RUNNABLE){
-          release(&p->lock);
-          continue;
+        if(p->state == RUNNABLE) {
+          counter += p->tickets;
+          if(counter >= rand_num){
+            p->state = RUNNING;
+            c->proc = p;
+            swtch(&c->context, &p->context);
+            c->proc = 0;
+            release(&p->lock);
+            break;
+          }
         }
-        counter += p->tickets;
-        if(counter < rand_num) {
-          release(&p->lock);
-          continue;
-        }
-        else if(p->state == RUNNABLE && counter >= rand_num) {
-          p->state = RUNNING;
-          c->proc = p;
-          swtch(&c->context, &p->context);
-          c->proc = 0;
-          release(&p->lock);
-          break;
-        }
+        release(&p->lock);
       }
     #endif
   }

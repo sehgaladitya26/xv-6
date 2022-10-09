@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "memory": "c",
-        "condition_variable": "c"
+        "condition_variable": "c",
+        "mutex": "c"
     }
 }
