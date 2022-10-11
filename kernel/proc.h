@@ -122,4 +122,16 @@ struct proc {
 
   // Assigning tickets to each process
   int tickets;
+
+  // For PBS Scheduler
+  int start_time_pbs;
+  int number_times;// Number of times scheduled previously
+  int priority; // The static priority
+  int niceness_var;
+  int last_sleep_time;
+  int last_run_time; 
+  int total_run_time;
 };
+
+void update_timer();
+int setpriority(int new_priority, int proc_pid);

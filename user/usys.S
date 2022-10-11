@@ -125,3 +125,8 @@ settickets:
  li a7, SYS_settickets
  ecall
  ret
+.global setpriority
+setpriority:
+ li a7, SYS_setpriority
+ ecall
+ ret

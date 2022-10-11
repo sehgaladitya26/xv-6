@@ -127,3 +127,27 @@ sys_settickets(void)
   argint(0, &myproc()->tickets);
   return myproc()->tickets;
 }
+
+uint64
+sys_setpriority(void)
+{
+  int new_priority, proc_pid;
+
+  argint(0, &new_priority);
+
+  // if (arg1 < 0 || arg1 > 100)
+  // {
+  //   printf("This is invalid priority\n");
+  //   return -1;
+  // }
+  
+  argint(1, &proc_pid);
+
+  // if(arg2 < 0)
+  // {
+  //   printf("This is invalid PID\n");
+  //   return -1;
+  // }
+
+  return setpriority(new_priority, proc_pid);
+}

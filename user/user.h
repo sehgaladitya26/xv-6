@@ -26,6 +26,7 @@ int trace(int);
 int sigalarm(int interval, void (*handler)());
 int sigreturn(void);
 int settickets(int number);
+int setpriority(int new_priority, int proc_pid);
 
 // ulib.c
 int stat(const char*, struct stat*);
