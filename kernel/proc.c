@@ -209,10 +209,6 @@ found:
   p->etime = 0;
   p->ctime = ticks;
 
-  // #ifdef MLFQ
-	// 	enqueue(p);
-	// #endif
-
   return p;
 }
 
@@ -318,11 +314,6 @@ userinit(void)
 
   p->state = RUNNABLE;
 
-  // #ifdef MLFQ
-  //   p->curr_rtime = p->curr_wtime = 0;
-	// 	enqueue(p);
-	// #endif
-
   release(&p->lock);
 }
 
@@ -395,10 +386,6 @@ fork(void)
 
   acquire(&np->lock);
   np->state = RUNNABLE;
-  // #ifdef MLFQ
-  //   p->curr_rtime = p->curr_wtime = 0;
-	// 	enqueue(np);
-	// #endif
   release(&np->lock);
 
   return pid;
@@ -697,13 +684,6 @@ scheduler(void)
           p->in_queue = 0;
           if (p->state == RUNNABLE)
           {
-            // //printf("here\n");
-            // p->state = RUNNING;
-            // c->proc = p;
-            // swtch(&c->context, &p->context);
-            // //printf("here2\n");
-            // c->proc = 0;
-            // release(&p->lock);
             chosen = p;
             break;
           }
@@ -713,13 +693,10 @@ scheduler(void)
           break;
       }
       if(chosen != 0) {
-        //chosen->quanta = 1 << chosen->priority;
         chosen->state = RUNNING;
         c->proc = chosen;
-        //chosen->nrun++;
         swtch(&c->context, &chosen->context);
         c->proc = 0;
-        //chosen->qitime = ticks;
         release(&chosen->lock);
       }
     #endif
@@ -857,10 +834,6 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
-        // #ifdef MLFQ
-				//   p->curr_rtime = p->curr_wtime = 0;
-				//   enqueue(p);
-			  // #endif
       }
       release(&p->lock);
     }
@@ -882,10 +855,6 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
-        // #ifdef MLFQ
-        //   p->curr_rtime = p->curr_wtime = 0;
-		    //   enqueue(p);
-	      // #endif
       }
       release(&p->lock);
       return 0;

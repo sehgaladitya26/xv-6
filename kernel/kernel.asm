@@ -5131,10 +5131,6 @@ wakeup(void *chan)
     800025c8:	a821                	j	800025e0 <wakeup+0x40>
         p->state = RUNNABLE;
     800025ca:	0154ac23          	sw	s5,24(s1)
-        // #ifdef MLFQ
-				//   p->curr_rtime = p->curr_wtime = 0;
-				//   enqueue(p);
-			  // #endif
       }
       release(&p->lock);
     800025ce:	8526                	mv	a0,s1
@@ -5332,7 +5328,7 @@ kill(int pid)
     if(p->pid == pid){
     8000277c:	589c                	lw	a5,48(s1)
     8000277e:	01278d63          	beq	a5,s2,80002798 <kill+0x46>
-	      // #endif
+        p->state = RUNNABLE;
       }
       release(&p->lock);
       return 0;
