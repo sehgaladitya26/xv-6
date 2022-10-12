@@ -2,6 +2,12 @@
     "files.associations": {
         "memory": "c",
         "condition_variable": "c",
-        "mutex": "c"
+        "mutex": "c",
+        "tuple": "c",
+        "array": "c",
+        "deque": "c",
+        "list": "c",
+        "vector": "c",
+        "string_view": "c"
     }
 }

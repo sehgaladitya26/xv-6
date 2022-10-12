@@ -105,6 +105,10 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
+  uint rtime;                   // How long the process ran for
+  uint ctime;                   // When was the process created 
+  uint etime;                   // When did the process exited
+
   // flag to check for trace syscall
   int trace_flag; 
 
@@ -122,4 +126,20 @@ struct proc {
 
   // Assigning tickets to each process
   int tickets;
+
+  // For MLFQ
+  int priority;
+  int in_queue;
+  int curr_rtime;
+  int curr_wtime;
 };
+
+#ifdef MLFQ
+struct priority_queue
+{
+  int front; 
+  int back;
+  int length;
+  struct proc *procs[NPROC+1];
+};
+#endif

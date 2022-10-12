@@ -11,6 +11,11 @@ uint ticks;
 
 extern char trampoline[], uservec[], userret[];
 
+#ifdef MLFQ
+extern int priority_levels[5];
+extern struct priority_queue queues[5];
+#endif
+
 // in kernelvec.S, calls kerneltrap().
 void kernelvec();
 
@@ -85,10 +90,6 @@ usertrap(void)
     exit(-1);
 
   // give up the CPU if this is a timer interrupt.
-  // if(which_dev == 2)
-  //   yield();
-
-  // give up the CPU if this is a timer interrupt.
   #ifdef RR
     if(which_dev == 2)
       yield();
@@ -96,6 +97,29 @@ usertrap(void)
   #ifdef LBS
     if(which_dev == 2)
       yield();
+  #endif
+  #ifdef MLFQ
+    //struct proc* p = myproc();
+    if(which_dev == 2 && myproc()->state == RUNNING && myproc() != 0) {
+      //printf("u%d\n",priority_levels[p->priority]);
+      if(p->curr_rtime >= priority_levels[p->priority]) {
+        if(p->priority != 4) {
+          p->priority++;
+        }
+        p->curr_rtime = 0;
+        p->curr_wtime = 0;
+        yield();
+      }
+      else {
+        for(int i = 0; i < p->priority; i++) {
+          if(queues[i].length > 0) {
+            // p->curr_rtime = 0;
+            // p->curr_wtime = 0;
+            yield();
+          }
+        }
+      }
+    }
   #endif
   usertrapret();
 }
@@ -176,6 +200,29 @@ kerneltrap()
     if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
       yield();
   #endif
+  #ifdef MLFQ
+    if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING) {
+      struct proc* p = myproc();
+      //printf("k%d\n",priority_levels[p->priority]);
+      if(p->curr_rtime >= priority_levels[p->priority]) {
+        if(p->priority != 4) {
+          p->priority++;
+        }
+        // p->curr_rtime = 0;
+        // p->curr_wtime = 0;
+        yield();
+      }
+      else {
+        for(int i = 0; i < p->priority; i++) {
+          if(queues[i].length > 0) {
+            // p->curr_rtime = 0;
+            // p->curr_wtime = 0;
+            yield();
+          }
+        }
+      }
+    }
+  #endif
 
   // give up the CPU if this is a timer interrupt.
   // if(which_dev == 2 && myproc() != 0 && myproc()->state == RUNNING)
@@ -192,6 +239,7 @@ clockintr()
 {
   acquire(&tickslock);
   ticks++;
+  update_time();
   wakeup(&ticks);
   release(&tickslock);
 }

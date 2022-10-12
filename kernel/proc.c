@@ -27,6 +27,55 @@ extern char trampoline[]; // trampoline.S
 // must be acquired before any p->lock.
 struct spinlock wait_lock;
 
+#ifdef MLFQ
+struct priority_queue queues[5];
+int priority_levels[5] = {1,2,4,8,16};
+
+void enqueue(struct proc *process)
+{
+  int idx = process->priority;
+  //printf("%d %d\n",queues[idx].back, queues[idx].length);
+  if (queues[idx].length == NPROC)
+    panic("Full queue");
+
+  queues[idx].procs[queues[idx].back] = process;
+  queues[idx].back++;  
+  if (queues[idx].back == NPROC + 1) queues[idx].back = 0;
+  queues[idx].length++;
+  //printf("%d\n",process->priority);
+  //printf("size: %d\n",q->size);
+}
+
+void dequeue(struct proc *process)
+{
+  int idx = process->priority;
+  if (queues[idx].length == 0)
+    panic("Empty queue");
+  
+  queues[idx].front++;
+  if (queues[idx].front == NPROC + 1) queues[idx].front = 0;
+  queues[idx].length--;
+}
+
+void delqueue(struct proc *process)
+{
+  int idx = process->priority;
+  int curr = queues[idx].front;
+  while (curr != queues[idx].back)
+  {
+      //struct proc *temp = queues[idx].procs[curr];
+    queues[idx].procs[curr] = queues[idx].procs[(curr + 1) % (NPROC + 1)];
+      //queues[idx].procs[(curr + 1) % (NPROC + 1)] = temp;
+    curr = (curr + 1) % (NPROC + 1);
+  }
+
+  queues[idx].back--;
+  queues[idx].length--;
+  if (queues[idx].back < 0)
+    queues[idx].back = NPROC;
+}
+#endif
+
 // Allocate a page for each process's kernel stack.
 // Map it high in memory, followed by an invalid
 // guard page.
@@ -129,6 +178,11 @@ found:
   p->tick_creation_time = ticks;
   // FOR LBS Scheduler
   p->tickets = 10;
+  // FOR MLFQ
+  p->priority = 0;
+  p->in_queue = 0;
+  p->curr_rtime = 0;
+  p->curr_wtime = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -150,6 +204,14 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+
+  p->rtime = 0;
+  p->etime = 0;
+  p->ctime = ticks;
+
+  // #ifdef MLFQ
+	// 	enqueue(p);
+	// #endif
 
   return p;
 }
@@ -256,6 +318,11 @@ userinit(void)
 
   p->state = RUNNABLE;
 
+  // #ifdef MLFQ
+  //   p->curr_rtime = p->curr_wtime = 0;
+	// 	enqueue(p);
+	// #endif
+
   release(&p->lock);
 }
 
@@ -328,6 +395,10 @@ fork(void)
 
   acquire(&np->lock);
   np->state = RUNNABLE;
+  // #ifdef MLFQ
+  //   p->curr_rtime = p->curr_wtime = 0;
+	// 	enqueue(np);
+	// #endif
   release(&np->lock);
 
   return pid;
@@ -385,12 +456,64 @@ exit(int status)
 
   p->xstate = status;
   p->state = ZOMBIE;
+  p->etime = ticks;
 
   release(&wait_lock);
 
   // Jump into the scheduler, never to return.
   sched();
   panic("zombie exit");
+}
+
+// Wait for a child process to exit and return its pid.
+// Return -1 if this process has no children.
+int
+waitx(uint64 addr, uint* wtime, uint* rtime)
+{
+  struct proc *np;
+  int havekids, pid;
+  struct proc *p = myproc();
+
+  acquire(&wait_lock);
+
+  for(;;){
+    // Scan through table looking for exited children.
+    havekids = 0;
+    for(np = proc; np < &proc[NPROC]; np++){
+      if(np->parent == p){
+        // make sure the child isn't still in exit() or swtch().
+        acquire(&np->lock);
+
+        havekids = 1;
+        if(np->state == ZOMBIE){
+          // Found one.
+          pid = np->pid;
+          *rtime = np->curr_rtime;
+          *wtime = np->curr_wtime;
+          if(addr != 0 && copyout(p->pagetable, addr, (char *)&np->xstate,
+                                  sizeof(np->xstate)) < 0) {
+            release(&np->lock);
+            release(&wait_lock);
+            return -1;
+          }
+          freeproc(np);
+          release(&np->lock);
+          release(&wait_lock);
+          return pid;
+        }
+        release(&np->lock);
+      }
+    }
+
+    // No point waiting if we don't have any children.
+    if(!havekids || p->killed){
+      release(&wait_lock);
+      return -1;
+    }
+
+    // Wait for a child to exit.
+    sleep(p, &wait_lock);  //DOC: wait-sleep
+  }
 }
 
 // Wait for a child process to exit and return its pid.
@@ -452,6 +575,7 @@ wait(uint64 addr)
 void
 scheduler(void)
 {
+  struct proc *p = 0;
   struct cpu *c = mycpu();
   
   c->proc = 0;
@@ -459,7 +583,7 @@ scheduler(void)
     // Avoid deadlock by ensuring that devices can interrupt.
     intr_on();
   #ifdef RR
-    struct proc *p;
+    //struct proc *p;
     for(p = proc; p < &proc[NPROC]; p++) {
       acquire(&p->lock);
       if(p->state == RUNNABLE) {
@@ -479,7 +603,7 @@ scheduler(void)
     #endif
     #ifdef FCFS
       //printf("...FCFS...\n");
-      struct proc *p;
+      //struct proc *p;
       struct proc* proc_to_run = 0;
       for(p = proc; p < &proc[NPROC]; p++)
       {
@@ -516,7 +640,7 @@ scheduler(void)
       }
     #endif
     #ifdef LBS
-      struct proc *p;
+      //struct proc *p;
       int counter = 0;
       long rand_num = -1;
       int max_tickets = 0;
@@ -544,6 +668,59 @@ scheduler(void)
           }
         }
         release(&p->lock);
+      }
+    #endif
+    #ifdef MLFQ
+      struct proc *chosen = 0;
+
+      for (p = proc; p < &proc[NPROC]; p++)
+      {
+        acquire(&p->lock);
+        if (p->state == RUNNABLE && p->in_queue == 0)
+        {
+          enqueue(p);
+          p->curr_rtime = 0;
+          p->curr_wtime = 0;
+          p->in_queue = 1;
+        }
+        release(&p->lock);
+      }
+
+      for (int i = 0; i < 5; i++)
+      {
+        for(int j = 0; j < queues[i].length; j++)
+        {
+          //printf("%d %d\n",i,queues[i].length);
+          p = queues[i].procs[queues[i].front];
+          acquire(&p->lock);
+          dequeue(p);  // clear out all the processes as it goes through all the levels
+          p->in_queue = 0;
+          if (p->state == RUNNABLE)
+          {
+            // //printf("here\n");
+            // p->state = RUNNING;
+            // c->proc = p;
+            // swtch(&c->context, &p->context);
+            // //printf("here2\n");
+            // c->proc = 0;
+            // release(&p->lock);
+            chosen = p;
+            break;
+          }
+          release(&p->lock);
+        }
+        if (chosen)
+          break;
+      }
+      if(chosen != 0) {
+        //chosen->quanta = 1 << chosen->priority;
+        chosen->state = RUNNING;
+        c->proc = chosen;
+        //chosen->nrun++;
+        swtch(&c->context, &chosen->context);
+        c->proc = 0;
+        //chosen->qitime = ticks;
+        release(&chosen->lock);
       }
     #endif
   }
@@ -585,6 +762,35 @@ yield(void)
   p->state = RUNNABLE;
   sched();
   release(&p->lock);
+}
+
+void
+update_time(void)
+{
+  struct proc *p;
+  for(p = proc; p < &proc[NPROC]; p++){
+    acquire(&p->lock);
+    if(p->state == RUNNING) {
+      p->curr_rtime++;
+      //printf("curr_rtime: %d\n",p->curr_rtime);
+    }
+    else if(p->state == RUNNABLE) {
+      p->curr_wtime++;
+      //printf("curr_wtime: %d\n",p->curr_wtime);
+    }
+    #ifdef MLFQ
+    if(p->curr_wtime >= 32 && p->state == RUNNABLE) {
+      if(p->in_queue != 0) {
+        delqueue(p);
+        p->in_queue = 0;
+      }
+      if(p->priority != 0) {
+        p->priority--;
+      }
+    }
+    #endif
+    release(&p->lock);
+  }
 }
 
 // A fork child's very first scheduling by scheduler()
@@ -651,6 +857,10 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
+        // #ifdef MLFQ
+				//   p->curr_rtime = p->curr_wtime = 0;
+				//   enqueue(p);
+			  // #endif
       }
       release(&p->lock);
     }
@@ -672,6 +882,10 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
+        // #ifdef MLFQ
+        //   p->curr_rtime = p->curr_wtime = 0;
+		    //   enqueue(p);
+	      // #endif
       }
       release(&p->lock);
       return 0;
