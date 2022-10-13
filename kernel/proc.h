@@ -132,6 +132,7 @@ struct proc {
   int in_queue;
   int curr_rtime;
   int curr_wtime;
+  int itime;
 };
 
 #ifdef MLFQ

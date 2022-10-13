@@ -183,6 +183,7 @@ found:
   p->in_queue = 0;
   p->curr_rtime = 0;
   p->curr_wtime = 0;
+  p->itime = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -232,6 +233,9 @@ freeproc(struct proc *p)
   p->killed = 0;
   p->xstate = 0;
   p->state = UNUSED;
+  p->etime = 0;
+  p->rtime = 0;
+  p->ctime = 0;
 }
 
 // Create a user page table for a given process, with no user memory,
@@ -475,8 +479,8 @@ waitx(uint64 addr, uint* wtime, uint* rtime)
         if(np->state == ZOMBIE){
           // Found one.
           pid = np->pid;
-          *rtime = np->curr_rtime;
-          *wtime = np->curr_wtime;
+          *rtime = np->rtime;
+          *wtime = np->etime - np->ctime - np->rtime;
           if(addr != 0 && copyout(p->pagetable, addr, (char *)&np->xstate,
                                   sizeof(np->xstate)) < 0) {
             release(&np->lock);
@@ -658,7 +662,7 @@ scheduler(void)
       }
     #endif
     #ifdef MLFQ
-      struct proc *chosen = 0;
+      struct proc *proc_to_run = 0;
 
       for (p = proc; p < &proc[NPROC]; p++)
       {
@@ -684,20 +688,22 @@ scheduler(void)
           p->in_queue = 0;
           if (p->state == RUNNABLE)
           {
-            chosen = p;
+            p->itime = ticks;
+            proc_to_run = p;
             break;
           }
           release(&p->lock);
         }
-        if (chosen)
+        if (proc_to_run)
           break;
       }
-      if(chosen != 0) {
-        chosen->state = RUNNING;
-        c->proc = chosen;
-        swtch(&c->context, &chosen->context);
+      if(proc_to_run != 0) {
+        proc_to_run->state = RUNNING;
+        c->proc = proc_to_run;
+        swtch(&c->context, &proc_to_run->context);
         c->proc = 0;
-        release(&chosen->lock);
+        proc_to_run->itime = ticks;
+        release(&proc_to_run->lock);
       }
     #endif
   }
@@ -749,6 +755,7 @@ update_time(void)
     acquire(&p->lock);
     if(p->state == RUNNING) {
       p->curr_rtime++;
+      p->rtime++;
       //printf("curr_rtime: %d\n",p->curr_rtime);
     }
     else if(p->state == RUNNABLE) {
@@ -756,8 +763,11 @@ update_time(void)
       //printf("curr_wtime: %d\n",p->curr_wtime);
     }
     #ifdef MLFQ
-    if(p->curr_wtime >= 32 && p->state == RUNNABLE) {
+    if(ticks - p->itime >= 8 && p->state == RUNNABLE) {
+      printf("%d %d\n",ticks-p->itime, p->curr_wtime);
       if(p->in_queue != 0) {
+        //printf("here\n");
+        p->itime = ticks;
         delqueue(p);
         p->in_queue = 0;
       }

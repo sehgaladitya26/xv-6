@@ -95,7 +95,7 @@ usertrap(void)
       yield();
   #endif
   #ifdef LBS
-    if(which_dev == 2)
+    if(which_dev == 2 && myproc()->state == RUNNING && myproc() != 0)
       yield();
   #endif
   #ifdef MLFQ
