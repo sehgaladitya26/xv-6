@@ -42,6 +42,9 @@ void enqueue(struct proc *process)
   queues[idx].back++;  
   if (queues[idx].back == NPROC + 1) queues[idx].back = 0;
   queues[idx].length++;
+  process->curr_rtime = 0;
+  process->curr_wtime = 0;
+  process->in_queue = 1;
   //printf("%d\n",process->priority);
   //printf("size: %d\n",q->size);
 }
@@ -55,6 +58,7 @@ void dequeue(struct proc *process)
   queues[idx].front++;
   if (queues[idx].front == NPROC + 1) queues[idx].front = 0;
   queues[idx].length--;
+  process->in_queue = 0;
 }
 
 void delqueue(struct proc *process)
@@ -210,6 +214,10 @@ found:
   p->etime = 0;
   p->ctime = ticks;
 
+  // #ifdef MLFQ
+	// 	enqueue(p);
+	// #endif
+
   return p;
 }
 
@@ -317,6 +325,9 @@ userinit(void)
   p->cwd = namei("/");
 
   p->state = RUNNABLE;
+  // #ifdef MLFQ
+	// 	      enqueue(p);
+	//       #endif
 
   release(&p->lock);
 }
@@ -390,6 +401,9 @@ fork(void)
 
   acquire(&np->lock);
   np->state = RUNNABLE;
+  // #ifdef MLFQ
+	// 	      enqueue(p);
+	//       #endif
   release(&np->lock);
 
   return pid;
@@ -671,9 +685,6 @@ scheduler(void)
         if (p->state == RUNNABLE && p->in_queue == 0)
         {
           enqueue(p);
-          p->curr_rtime = 0;
-          p->curr_wtime = 0;
-          p->in_queue = 1;
         }
         release(&p->lock);
       }
@@ -744,6 +755,9 @@ yield(void)
   struct proc *p = myproc();
   acquire(&p->lock);
   p->state = RUNNABLE;
+  // #ifdef MLFQ
+	// 	enqueue(p);
+	// #endif
   sched();
   release(&p->lock);
 }
@@ -764,8 +778,8 @@ update_time(void)
       //printf("curr_wtime: %d\n",p->curr_wtime);
     }
     #ifdef MLFQ
-    if(ticks - p->itime >= 8 && p->state == RUNNABLE) {
-      printf("%d %d\n",ticks-p->itime, p->curr_wtime);
+    if(ticks - p->itime >= 32 && p->state == RUNNABLE) {
+      //printf("%d %d\n",ticks-p->itime, p->curr_wtime);
       if(p->in_queue != 0) {
         //printf("here\n");
         p->itime = ticks;
@@ -845,6 +859,9 @@ wakeup(void *chan)
       acquire(&p->lock);
       if(p->state == SLEEPING && p->chan == chan) {
         p->state = RUNNABLE;
+        // #ifdef MLFQ
+		    //   enqueue(p);
+	      // #endif
       }
       release(&p->lock);
     }
@@ -866,6 +883,9 @@ kill(int pid)
       if(p->state == SLEEPING){
         // Wake process from sleep().
         p->state = RUNNABLE;
+        // #ifdef MLFQ
+		    //   enqueue(p);
+	      // #endif
       }
       release(&p->lock);
       return 0;
