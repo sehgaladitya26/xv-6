@@ -127,6 +127,15 @@ struct proc {
   // Assigning tickets to each process
   int tickets;
 
+  // For PBS Scheduler
+  int start_time_pbs;
+  int number_times;// Number of times scheduled previously
+  int priority_pbs; // The static priority
+  int niceness_var;
+  int last_sleep_time;
+  int last_run_time; 
+  int total_run_time;
+
   // For MLFQ
   int priority;
   int in_queue;
@@ -144,3 +153,5 @@ struct priority_queue
   struct proc *procs[NPROC+1];
 };
 #endif
+
+int setpriority(int new_priority, int proc_pid);

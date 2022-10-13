@@ -182,6 +182,13 @@ found:
   p->tick_creation_time = ticks;
   // FOR LBS Scheduler
   p->tickets = 1;
+  // FOR PBS SCHEDULER
+  p->priority_pbs = 60;
+  p->niceness_var = 5;
+  p->start_time_pbs = ticks;
+  p->number_times = 0;
+  p->last_run_time = 0;
+  p->last_sleep_time = 0;
   // FOR MLFQ
   p->priority = 0;
   p->in_queue = 0;
@@ -570,6 +577,40 @@ wait(uint64 addr)
   }
 }
 
+#ifdef PBS
+// THIS IS THE DYNAMIC PRIORITY CALCLULATOR(PBS)
+int dynamic_priority(struct proc *proc_to_calc)
+{
+  if (proc_to_calc->number_times == 0) // If the process is being schedules for the first time
+  {
+    // printf("The process is being called for the first time\n");
+    return proc_to_calc->priority_pbs; // returns DP as 60 (SP).
+  }
+  else
+  {
+    int numerator = proc_to_calc->last_sleep_time;
+    int denominator = proc_to_calc->last_run_time + proc_to_calc->last_sleep_time;
+
+    int noiceness = ((numerator / denominator) * 10); // Calculates 'niceness'
+
+    int min;
+    if (proc_to_calc->priority_pbs + noiceness - 5 <= 100)
+    {
+      min = proc_to_calc->priority_pbs + noiceness - 5;
+    }
+    else
+    {
+      min = 100;
+    }
+
+    if (min > 0)
+      return min; // returns DP as per the formula
+
+    return 0; // else returns 0
+  }
+}
+#endif
+
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -676,6 +717,70 @@ scheduler(void)
         release(&p->lock);
       }
     #endif
+    #ifdef PBS
+      //struct proc *p;
+      struct proc *pbs_proc_to_run = 0;
+
+      int min_priority = __INT_MAX__, temp_dp;
+
+    for (p = proc; p < &proc[NPROC]; p++)
+    {
+      acquire(&p->lock);
+      if (p->state != RUNNABLE)
+      {
+        release(&p->lock);
+        continue;
+      }
+      else
+      {
+        if (pbs_proc_to_run == 0)
+        {
+          pbs_proc_to_run = p;
+          temp_dp = dynamic_priority(p);
+          min_priority = temp_dp;
+          continue;
+        }
+        else
+        {
+          temp_dp = dynamic_priority(p);
+
+          if (temp_dp < min_priority)
+          {
+            min_priority = temp_dp;
+            release(&pbs_proc_to_run->lock);
+            pbs_proc_to_run = p;
+            continue;
+          }
+          else if (temp_dp == min_priority)
+          {
+            if (pbs_proc_to_run->number_times > p->number_times)
+            {
+              release(&pbs_proc_to_run->lock);
+              pbs_proc_to_run = p;
+              min_priority = temp_dp;
+            }
+            else if ((pbs_proc_to_run->number_times == p->number_times) && (pbs_proc_to_run->tick_creation_time > p->tick_creation_time))
+            {
+              release(&pbs_proc_to_run->lock);
+              pbs_proc_to_run = p;
+              min_priority = temp_dp;
+            }
+          }
+        }
+      }
+      release(&p->lock);
+    }
+    if (pbs_proc_to_run != 0)
+    {
+      pbs_proc_to_run->state = RUNNING;
+      pbs_proc_to_run->last_run_time = 0;
+      pbs_proc_to_run->last_sleep_time = 0;
+      c->proc = pbs_proc_to_run;
+      swtch(&c->context, &pbs_proc_to_run->context);
+      c->proc = 0;
+      release(&pbs_proc_to_run->lock);
+    }
+    #endif
     #ifdef MLFQ
       struct proc *proc_to_run = 0;
 
@@ -771,12 +876,24 @@ update_time(void)
     if(p->state == RUNNING) {
       p->curr_rtime++;
       p->rtime++;
+      #ifdef PBS
+        p->last_run_time++;
+        p->total_run_time++;
+      #endif
       //printf("curr_rtime: %d\n",p->curr_rtime);
     }
+    #ifdef MLFQ
     else if(p->state == RUNNABLE) {
       p->curr_wtime++;
       //printf("curr_wtime: %d\n",p->curr_wtime);
     }
+    #endif
+    #ifdef PBS
+    if (p->state == SLEEPING)
+    {
+      p->last_sleep_time++;
+    }
+    #endif
     #ifdef MLFQ
     if(ticks - p->itime >= 32 && p->state == RUNNABLE) {
       //printf("%d %d\n",ticks-p->itime, p->curr_wtime);
@@ -971,5 +1088,33 @@ procdump(void)
       state = "???";
     printf("%d %s %s", p->pid, state, p->name);
     printf("\n");
+  }
+}
+
+int setpriority(int new_priority, int proc_pid)
+{
+  struct proc* p;
+  int old_priority;
+  int found_proc = 0;
+  for(p = proc; p < &proc[NPROC]; p++)
+  {
+    acquire(&p->lock);
+    if (p->pid == proc_pid)
+    {
+      old_priority = p->priority_pbs;
+      p->priority_pbs = new_priority;
+      release(&p->lock);
+      found_proc = 1;
+      break;
+    }
+    release(&p->lock);
+  }
+  if(found_proc == 1)
+  {
+    return old_priority;
+  }
+  else
+  {
+    return -1;
   }
 }

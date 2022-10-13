@@ -144,3 +144,13 @@ sys_waitx(void)
     return -1;
   return ret;
 }
+
+uint64
+sys_setpriority(void)
+{
+  int new_priority, proc_pid;
+
+  argint(0, &new_priority);
+  argint(1, &proc_pid);
+  return setpriority(new_priority, proc_pid);
+}
