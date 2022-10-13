@@ -177,7 +177,7 @@ found:
   // FOR FCFS Scheduler
   p->tick_creation_time = ticks;
   // FOR LBS Scheduler
-  p->tickets = 10;
+  p->tickets = 1;
   // FOR MLFQ
   p->priority = 0;
   p->in_queue = 0;
@@ -643,13 +643,14 @@ scheduler(void)
       }
 
       // Getting the value for random number
-      rand_num = random_at_most(max_tickets);
+      rand_num = random(max_tickets);
 
       for(p = proc; p < &proc[NPROC]; p++) {
         acquire(&p->lock);
         if(p->state == RUNNABLE) {
           counter += p->tickets;
           if(counter >= rand_num){
+            //printf("%d\n",(int)rand_num);
             p->state = RUNNING;
             c->proc = p;
             swtch(&c->context, &p->context);
