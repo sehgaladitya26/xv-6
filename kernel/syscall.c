@@ -182,7 +182,35 @@ syscall(void)
 
     // Check for trace_flag to be on
     if(p->trace_flag >> num) {  // check for '=='
-      printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      if(num == 0) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 1) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 2) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 3) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 4) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 5) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 6) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 7) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 8) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 9) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 10) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 11) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 12) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 13) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 14) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 15) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 16) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 17) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 18) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 19) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 20) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 21) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 22) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 23) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 24) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 25) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 26) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+      // else if(num == 27) printf("%d: syscall %s -> %d\n", p->pid, syscall_names[num], p->trapframe->a0);
+
     }
 
   } else {
