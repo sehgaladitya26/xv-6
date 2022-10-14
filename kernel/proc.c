@@ -65,18 +65,19 @@ void delqueue(struct proc *process)
 {
   int idx = process->priority;
   int curr = queues[idx].front;
+  int init_flag = 0;
   while (curr != queues[idx].back)
   {
-      //struct proc *temp = queues[idx].procs[curr];
-    queues[idx].procs[curr] = queues[idx].procs[(curr + 1) % (NPROC + 1)];
-      //queues[idx].procs[(curr + 1) % (NPROC + 1)] = temp;
+    if(queues[idx].procs[curr]->pid == process->pid) init_flag = 1;
+    if(init_flag == 1) {
+      queues[idx].procs[curr] = queues[idx].procs[(curr + 1) % (NPROC + 1)];
+    }
     curr = (curr + 1) % (NPROC + 1);
   }
-
+  process->curr_wtime = 0;
   queues[idx].back--;
   queues[idx].length--;
-  if (queues[idx].back < 0)
-    queues[idx].back = NPROC;
+  if (queues[idx].back < 0) queues[idx].back = NPROC;
 }
 #endif
 
@@ -194,7 +195,6 @@ found:
   p->in_queue = 0;
   p->curr_rtime = 0;
   p->curr_wtime = 0;
-  p->itime = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -805,7 +805,6 @@ scheduler(void)
           p->in_queue = 0;
           if (p->state == RUNNABLE)
           {
-            p->itime = ticks;
             proc_to_run = p;
             break;
           }
@@ -819,7 +818,6 @@ scheduler(void)
         c->proc = proc_to_run;
         swtch(&c->context, &proc_to_run->context);
         c->proc = 0;
-        proc_to_run->itime = ticks;
         release(&proc_to_run->lock);
       }
     #endif
@@ -895,17 +893,17 @@ update_time(void)
     }
     #endif
     #ifdef MLFQ
-    if(ticks - p->itime >= 32 && p->state == RUNNABLE) {
-      //printf("%d %d\n",ticks-p->itime, p->curr_wtime);
+    if(p->curr_wtime >= 30 && p->state == RUNNABLE) {
       if(p->in_queue != 0) {
-        //printf("here\n");
-        p->itime = ticks;
+        //p->curr_wtime = 0;
+        printf("Aging Performed on pid: %d\n", p->pid);
         delqueue(p);
         p->in_queue = 0;
       }
       if(p->priority != 0) {
         p->priority--;
       }
+      printf("%d %d %d %d a\n", p->priority, p->pid, p->curr_rtime, ticks);
     }
     #endif
     release(&p->lock);

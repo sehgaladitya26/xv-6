@@ -21,7 +21,7 @@ int main() {
             sleep(200); // IO bound processes
           } else {
 #endif
-            for (volatile int i = 0; i < 1000000000; i++) {} // CPU bound process 
+            for (volatile int i = 0; i < 2000000000; i++) {} // CPU bound process 
 #ifndef FCFS
           }
 #endif
@@ -30,10 +30,6 @@ int main() {
       } else {
 #ifdef PBS
         setpriority(80, pid); // Will only matter for PBS, set lower priority for IO bound processes 
-#endif
-
-#ifdef LBS
-        settickets(1000); // Will only matter for PBS, set lower priority for IO bound processes 
 #endif
       }
   }
