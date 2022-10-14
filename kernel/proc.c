@@ -896,14 +896,14 @@ update_time(void)
     if(p->curr_wtime >= 30 && p->state == RUNNABLE) {
       if(p->in_queue != 0) {
         //p->curr_wtime = 0;
-        //printf("Aging Performed on pid: %d\n", p->pid);
+        printf("Aging Performed on pid: %d\n", p->pid);
         delqueue(p);
         p->in_queue = 0;
       }
       if(p->priority != 0) {
         p->priority--;
       }
-      //printf("%d %d %d %d a\n", p->priority, p->pid, p->curr_rtime, ticks);
+      printf("%d %d %d %d a\n", p->priority, p->pid, p->curr_rtime, ticks);
     }
     #endif
     release(&p->lock);

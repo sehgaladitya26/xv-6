@@ -21,7 +21,7 @@ int main() {
             sleep(200); // IO bound processes
           } else {
 #endif
-            for (volatile int i = 0; i < 2000000000; i++) {} // CPU bound process 
+            for (volatile int i = 0; i < 1000000000; i++) {} // CPU bound process 
 #ifndef FCFS
           }
 #endif
