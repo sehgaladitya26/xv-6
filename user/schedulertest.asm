@@ -38,13 +38,11 @@ int main() {
   26:	4901                	li	s2,0
   28:	4981                	li	s3,0
   2a:	a079                	j	b8 <main+0xb8>
-#ifndef FCFS
           if (n < IO) {
   2c:	4791                	li	a5,4
   2e:	0497d663          	bge	a5,s1,7a <main+0x7a>
             sleep(200); // IO bound processes
           } else {
-#endif
             for (volatile int i = 0; i < 1000000000; i++) {} // CPU bound process 
   32:	fc042223          	sw	zero,-60(s0)
   36:	fc442703          	lw	a4,-60(s0)
@@ -59,9 +57,7 @@ int main() {
   54:	fc442783          	lw	a5,-60(s0)
   58:	2781                	sext.w	a5,a5
   5a:	fef758e3          	bge	a4,a5,4a <main+0x4a>
-#ifndef FCFS
           }
-#endif
           printf("Process %d finished\n", n);
   5e:	85a6                	mv	a1,s1
   60:	00001517          	auipc	a0,0x1

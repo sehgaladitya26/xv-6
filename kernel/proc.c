@@ -196,6 +196,9 @@ found:
   p->curr_rtime = 0;
   p->curr_wtime = 0;
 
+  p->rtime = 0;
+  p->ctime = ticks;
+
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
@@ -216,10 +219,6 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
-
-  p->rtime = 0;
-  p->etime = 0;
-  p->ctime = ticks;
 
   // #ifdef MLFQ
 	// 	enqueue(p);
@@ -896,14 +895,14 @@ update_time(void)
     if(p->curr_wtime >= 30 && p->state == RUNNABLE) {
       if(p->in_queue != 0) {
         //p->curr_wtime = 0;
-        printf("Aging Performed on pid: %d\n", p->pid);
+        //printf("Aging Performed on pid: %d\n", p->pid);
         delqueue(p);
         p->in_queue = 0;
       }
       if(p->priority != 0) {
         p->priority--;
       }
-      printf("%d %d %d %d a\n", p->priority, p->pid, p->curr_rtime, ticks);
+      //printf("%d %d %d %d a\n", p->priority, p->pid, p->curr_rtime, ticks);
     }
     #endif
     release(&p->lock);

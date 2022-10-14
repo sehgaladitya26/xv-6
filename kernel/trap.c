@@ -106,7 +106,7 @@ usertrap(void)
         if(p->priority != 4) {
           p->priority++;
         }
-        printf("%d %d %d %d\n", p->priority, p->pid, p->curr_rtime, ticks);
+        //printf("%d %d %d %d\n", p->priority, p->pid, p->curr_rtime, ticks);
         p->curr_rtime = 0;
         p->curr_wtime = 0;
         yield();
