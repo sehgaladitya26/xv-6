@@ -106,7 +106,7 @@ usertrap(void)
         if(p->priority != 4) {
           p->priority++;
         }
-        printf("%d %d %d %d\n", p->priority, p->pid, p->curr_rtime, ticks);
+        //printf("%d %d %d %d\n", p->priority, p->pid, p->curr_rtime, ticks);
         p->curr_rtime = 0;
         p->curr_wtime = 0;
         yield();
@@ -116,7 +116,7 @@ usertrap(void)
           if(queues[i].length > 0) {
             // p->curr_rtime = 0;
             // p->curr_wtime = 0;
-            printf("%d %d\n", p->priority, p->pid);
+            //printf("%d %d\n", p->priority, p->pid);
             yield();
           }
         }
@@ -212,7 +212,7 @@ kerneltrap()
         }
         // p->curr_rtime = 0;
         // p->curr_wtime = 0;
-        printf("%d %d %d\n", p->priority, p->pid, p->curr_rtime);
+        //printf("%d %d %d\n", p->priority, p->pid, p->curr_rtime);
         yield();
       }
       else {
@@ -220,7 +220,7 @@ kerneltrap()
           if(queues[i].length > 0) {
             // p->curr_rtime = 0;
             // p->curr_wtime = 0;
-            printf("%d %d\n", p->priority, p->pid);
+            //printf("%d %d\n", p->priority, p->pid);
             yield();
           }
         }
